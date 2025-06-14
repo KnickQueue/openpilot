@@ -291,16 +291,19 @@ class DynamicExperimentalController:
     )
 
     urgency = 0.0
+    self._endpoint_x = float('inf')  # Default to infinity
+    
     if len(md.position.x) == TRAJECTORY_SIZE:
       endpoint_x = md.position.x[TRAJECTORY_SIZE - 1]
+      self._endpoint_x = endpoint_x  # Store for use in mode decisions
 
       if endpoint_x < slow_down_threshold:
         shortage = slow_down_threshold - endpoint_x
         urgency = min(1.0, shortage / 20.0)
 
-        # Keep the speed boost logic if you want it
-        #if self._v_ego_kph > 40 and endpoint_x < 50:
-          #urgency = min(1.0, urgency * 1.5)
+        # More aggressive urgency for very short trajectories
+        if endpoint_x < 8.0:  # Very likely a stop line
+          urgency = min(1.0, urgency * 3.0)
 
     self._slow_down_filter.add_data(urgency)
     urgency_filtered = self._slow_down_filter.get_value() or 0.0
