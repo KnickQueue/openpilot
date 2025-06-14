@@ -361,7 +361,7 @@ class DynamicExperimentalController:
       return
 
     # Driving slow: use ACC
-    if self._has_slowness:
+    if self._has_slowness and not self._has_slow_down:
       self._mode_manager.request_mode('acc', confidence=0.8)
       return
 
