@@ -231,7 +231,7 @@ class DynamicExperimentalController:
     self._calculate_slow_down(md)
 
     # Slowness detection
-    if not (self._standstill_count > 5): # and not self._has_slow_down:
+    if not (self._standstill_count > 5) and not self._has_slow_down:
       current_slowness = float(self._v_ego_kph <= (self._v_cruise_kph * WMACConstants.SLOWNESS_CRUISE_OFFSET))
       self._slowness_filter.add_data(current_slowness)
       slowness_value = self._slowness_filter.get_value() or 0.0
@@ -301,6 +301,11 @@ class DynamicExperimentalController:
         # Keep the speed boost logic if you want it
         if self._v_ego_kph > 40 and endpoint_x < 50:
           urgency = min(1.0, urgency * 1.5)
+
+    self._slow_down_filter.add_data(urgency)
+    urgency_filtered = self._slow_down_filter.get_value() or 0.0
+    self._has_slow_down = urgency_filtered > WMACConstants.SLOW_DOWN_PROB
+    self._urgency = urgency_filtered
 
   def _radarless_mode(self) -> None:
     """Radarless mode decision logic."""
