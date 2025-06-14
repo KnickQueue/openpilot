@@ -299,7 +299,7 @@ class DynamicExperimentalController:
         urgency = min(1.0, shortage / 25.0)
 
         # Speed-based adjustment
-        speed_factor = min(1.2, self._v_ego_kph / 50.0)
+        speed_factor = min(1.2, max(0.8, self._v_ego_kph / 50.0))
         urgency *= speed_factor
 
     self._slow_down_filter.add_data(urgency)
