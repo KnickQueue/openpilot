@@ -231,7 +231,7 @@ class DynamicExperimentalController:
     self._calculate_slow_down(md)
 
     # Slowness detection
-    if not (self._standstill_count > 5) and not self._has_slow_down:
+    if not (self._standstill_count > 5): # and not self._has_slow_down:
       current_slowness = float(self._v_ego_kph <= (self._v_cruise_kph * WMACConstants.SLOWNESS_CRUISE_OFFSET))
       self._slowness_filter.add_data(current_slowness)
       slowness_value = self._slowness_filter.get_value() or 0.0
