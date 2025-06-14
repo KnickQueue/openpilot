@@ -231,7 +231,7 @@ class DynamicExperimentalController:
     self._calculate_slow_down(md)
 
     # Slowness detection
-    if not (self._standstill_count > 5):
+    if not (self._standstill_count > 5) and not self._has_slow_down:
       current_slowness = float(self._v_ego_kph <= (self._v_cruise_kph * WMACConstants.SLOWNESS_CRUISE_OFFSET))
       self._slowness_filter.add_data(current_slowness)
       slowness_value = self._slowness_filter.get_value() or 0.0
@@ -296,16 +296,11 @@ class DynamicExperimentalController:
 
       if endpoint_x < slow_down_threshold:
         shortage = slow_down_threshold - endpoint_x
-        urgency = min(1.0, shortage / 25.0)
+        urgency = min(1.0, shortage / 20.0)
 
-        # Speed-based adjustment
-        speed_factor = min(1.2, max(0.8, self._v_ego_kph / 50.0))
-        urgency *= speed_factor
-
-    self._slow_down_filter.add_data(urgency)
-    urgency_filtered = self._slow_down_filter.get_value() or 0.0
-    self._has_slow_down = urgency_filtered > WMACConstants.SLOW_DOWN_PROB
-    self._urgency = urgency_filtered
+        # Keep the speed boost logic if you want it
+        if self._v_ego_kph > 40 and endpoint_x < 50:
+          urgency = min(1.0, urgency * 1.5)
 
   def _radarless_mode(self) -> None:
     """Radarless mode decision logic."""
@@ -327,8 +322,8 @@ class DynamicExperimentalController:
       self._mode_manager.request_mode('blended', confidence=confidence)
       return
 
-    # Driving slow: use ACC
-    if self._has_slowness:
+    # Driving slow: use ACC (but not if actively slowing down)
+    if self._has_slowness and not self._has_slow_down:
       self._mode_manager.request_mode('acc', confidence=0.8)
       return
 
@@ -360,7 +355,7 @@ class DynamicExperimentalController:
       self._mode_manager.request_mode('blended', confidence=confidence)
       return
 
-    # Driving slow: use ACC
+    # Driving slow: use ACC (but not if actively slowing down)
     if self._has_slowness and not self._has_slow_down:
       self._mode_manager.request_mode('acc', confidence=0.8)
       return
