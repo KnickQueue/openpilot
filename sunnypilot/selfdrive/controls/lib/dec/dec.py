@@ -299,8 +299,8 @@ class DynamicExperimentalController:
         urgency = min(1.0, shortage / 20.0)
 
         # Keep the speed boost logic if you want it
-        if self._v_ego_kph > 40 and endpoint_x < 50:
-          urgency = min(1.0, urgency * 1.5)
+        #if self._v_ego_kph > 40 and endpoint_x < 50:
+          #urgency = min(1.0, urgency * 1.5)
 
     self._slow_down_filter.add_data(urgency)
     urgency_filtered = self._slow_down_filter.get_value() or 0.0
