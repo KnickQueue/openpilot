@@ -8,8 +8,8 @@ class WMACConstants:
   SLOW_DOWN_PROB = 0.5  # Balanced threshold for slow down scenarios
 
   # Optimized slow down distance curve - smooth and progressive
-  SLOW_DOWN_BP = [0, 25, 45, 65]
-  SLOW_DOWN_DIST = [45, 65, 85, 130]
+  SLOW_DOWN_BP = [0., 10., 20., 30., 40., 50., 55., 60.]
+  SLOW_DOWN_DIST = [32., 46., 64., 86., 108., 130., 145., 165.]
   #SLOW_DOWN_DIST = [28., 42., 58., 78., 98., 118., 133., 153.]
   #SLOW_DOWN_DIST = [25., 38., 55., 75., 95., 115., 130., 150.]
   #SLOW_DOWN_DIST = [30., 45., 60., 80., 100., 120., 135., 150.]
