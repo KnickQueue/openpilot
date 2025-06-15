@@ -286,30 +286,53 @@ class DynamicExperimentalController:
         pass
 
   def _calculate_slow_down(self, md):
-    """Calculate urgency based on model trajectory length."""
+    """Calculate urgency based on trajectory endpoint vs expected distance."""
 
-    # Use model's full trajectory length instead of fixed thresholds
-    expected_distance = ModelConstants.T_IDXS[-1] * self._v_ego_kph / 3.6
-
+    # Reset to safe defaults
     urgency = 0.0
     self._endpoint_x = float('inf')
 
-    if len(md.position.x):
-      endpoint_x = md.position.x[-1]
-      self._endpoint_x = endpoint_x
+    # Need valid position data
+    if not len(md.position.x): # == TRAJECTORY_SIZE:
+      self._slow_down_filter.add_data(urgency)
+      urgency_filtered = self._slow_down_filter.get_value() or 0.0
+      self._has_slow_down = urgency_filtered > WMACConstants.SLOW_DOWN_PROB
+      self._urgency = urgency_filtered
+      return
 
-      # Compare actual trajectory length to expected distance
-      # Shorter trajectory = higher urgency
-      if endpoint_x < expected_distance:
-        shortage = expected_distance - endpoint_x
-        urgency = min(1.0, shortage / max(10.0, expected_distance * 0.3))
+    # Get actual trajectory endpoint
+    endpoint_x = md.position.x[-1] # can be any legnth now ?
+    self._endpoint_x = endpoint_x
 
-        # Very short trajectories indicate imminent stops
-        if endpoint_x < (expected_distance * 0.4):
-          urgency = min(1.0, urgency * 2.5)
+    # Get expected distance based on current speed using tuned constants
+    expected_distance = interp(self._v_ego_kph,
+                               WMACConstants.SLOW_DOWN_BP,
+                               WMACConstants.SLOW_DOWN_DIST)
 
+    # Calculate urgency based on trajectory shortage
+    if endpoint_x < expected_distance:
+      shortage = expected_distance - endpoint_x
+      shortage_ratio = shortage / expected_distance
+
+      # Base urgency on shortage ratio
+      urgency = min(1.0, shortage_ratio * 2.0)
+
+      # Increase urgency for very short trajectories (imminent stops)
+      critical_distance = expected_distance * 0.4  # 40% of expected
+      if endpoint_x < critical_distance:
+        urgency = min(1.0, urgency * 1.5)
+
+      # Speed-based urgency adjustment
+      # Higher speeds need more attention when trajectory is short
+      if self._v_ego_kph > 30.0:
+        speed_factor = 1.0 + (self._v_ego_kph - 30.0) / 100.0
+        urgency = min(1.0, urgency * speed_factor)
+
+    # Apply smoothing filter
     self._slow_down_filter.add_data(urgency)
     urgency_filtered = self._slow_down_filter.get_value() or 0.0
+
+    # Update state
     self._has_slow_down = urgency_filtered > WMACConstants.SLOW_DOWN_PROB
     self._urgency = urgency_filtered
 
