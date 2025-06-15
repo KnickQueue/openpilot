@@ -30,6 +30,7 @@ from numpy import interp
 from openpilot.common.params import Params
 from openpilot.common.realtime import DT_MDL
 from openpilot.sunnypilot.selfdrive.controls.lib.dec.constants import WMACConstants
+from openpilot.selfdrive.controls.lib.longitudinal_planner import ModelConstants
 
 # d-e2e, from modeldata.h
 TRAJECTORY_SIZE = 33
@@ -285,25 +286,27 @@ class DynamicExperimentalController:
         pass
 
   def _calculate_slow_down(self, md):
-    """Calculate urgency for slow down scenarios."""
-    slow_down_threshold = float(
-      interp(self._v_ego_kph, WMACConstants.SLOW_DOWN_BP, WMACConstants.SLOW_DOWN_DIST)
-    )
+    """Calculate urgency based on model trajectory length."""
+
+    # Use model's full trajectory length instead of fixed thresholds
+    expected_distance = ModelConstants.T_IDXS[-1] * self._v_ego_kph / 3.6
 
     urgency = 0.0
-    self._endpoint_x = float('inf')  # Default to infinity
-    
-    if len(md.position.x) == TRAJECTORY_SIZE:
-      endpoint_x = md.position.x[TRAJECTORY_SIZE - 1]
-      self._endpoint_x = endpoint_x  # Store for use in mode decisions
+    self._endpoint_x = float('inf')
 
-      if endpoint_x < slow_down_threshold:
-        shortage = slow_down_threshold - endpoint_x
-        urgency = min(1.0, shortage / 20.0)
+    if len(md.position.x):
+      endpoint_x = md.position.x[-1]
+      self._endpoint_x = endpoint_x
 
-        # More aggressive urgency for very short trajectories
-        if endpoint_x < 8.0:  # Very likely a stop line
-          urgency = min(1.0, urgency * 3.0)
+      # Compare actual trajectory length to expected distance
+      # Shorter trajectory = higher urgency
+      if endpoint_x < expected_distance:
+        shortage = expected_distance - endpoint_x
+        urgency = min(1.0, shortage / max(10.0, expected_distance * 0.3))
+
+        # Very short trajectories indicate imminent stops
+        if endpoint_x < (expected_distance * 0.4):
+          urgency = min(1.0, urgency * 2.5)
 
     self._slow_down_filter.add_data(urgency)
     urgency_filtered = self._slow_down_filter.get_value() or 0.0
