@@ -21,6 +21,7 @@ private:
   ParamControl* experimentalLongitudinalToggle;
   ParamControl* enableGithubRunner;
   ParamControl* dynamicpersonality;
+  ParamControl* dynamicJerk;
   bool is_release;
   bool offroad = false;
 
