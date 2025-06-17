@@ -77,13 +77,11 @@ class LongitudinalPlanner(LongitudinalPlannerSP):
     self.read_param()
 
     self.dynamic_personality = False
-    self.dynamic_jerk = False
 
 
   def read_param(self):
     try:
       self.dynamic_personality = self.params.get_bool("DynamicPersonality")
-      self.dynamic_jerk = self.params.get_bool("DynamicJerk")
     except AttributeError:
       pass
 
@@ -109,9 +107,6 @@ class LongitudinalPlanner(LongitudinalPlannerSP):
     return x, v, a, j, throttle_prob
 
   def update(self, sm):
-    if self.param_read_counter % 50 == 0:
-      self.read_param()
-    self.param_read_counter += 1
     self.mode = 'blended' if sm['selfdriveState'].experimentalMode else 'acc'
     LongitudinalPlannerSP.update(self, sm)
     if dec_mpc_mode := self.get_mpc_mode():
@@ -177,8 +172,8 @@ class LongitudinalPlanner(LongitudinalPlannerSP):
 
     if force_slow_decel:
       v_cruise = 0.0
-    #print("++++++++ DYNAMIC JERK_________ status:", self.dynamic_jerk)
-    self.mpc.set_weights(prev_accel_constraint, personality=sm['selfdriveState'].personality, dynamic_jerk = self.dynamic_jerk)
+
+    self.mpc.set_weights(prev_accel_constraint, personality=sm['selfdriveState'].personality)
     self.mpc.set_cur_state(self.v_desired_filter.x, self.a_desired)
     self.mpc.update(sm['radarState'], v_cruise, x, v, a, j, personality=sm['selfdriveState'].personality, dynamic_personality = self.dynamic_personality)
 

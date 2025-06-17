@@ -80,7 +80,6 @@ def manager_init() -> None:
     ("AccelPersonality", str(custom.LongitudinalPlanSP.AccelerationPersonality.stock)),
     ("ToyotaDriveMode", "0"),
     ("DynamicPersonality", "0"),
-    ("DynamicJerk", "0"),
   ]
 
   # device boot mode

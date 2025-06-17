@@ -214,5 +214,4 @@ inline static std::unordered_map<std::string, uint32_t> keys = {
     {"AccelPersonality", PERSISTENT},
     {"ToyotaDriveMode", PERSISTENT},
     {"DynamicPersonality", PERSISTENT},
-    {"DynamicJerk", PERSISTENT},
 };
