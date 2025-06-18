@@ -28,4 +28,6 @@ private:
 
   SpeedLimitControlSubpanel *slcScreen;
   SpeedLimitControl *slcControl;
+
+  ParamControlSP *visionTurnSpeedControl = nullptr;
 };
